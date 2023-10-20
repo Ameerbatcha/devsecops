@@ -37,7 +37,7 @@ pipeline {
                       sh 'docker login -u ameerbatcha -p ${dockerhubpasswd}'
                    }
              
-              sh 'docker push ameerbatcha/regapp:${DOCKER_TAG}'
+              sh 'docker push ameerbatcha/devsecops:${DOCKER_TAG}'
             }
          }
          
