@@ -1,68 +1,58 @@
 pipeline {
-  agent any 
-  tools {
-    maven 'Maven'
-  }
-  stages {
-    stage ('Initialize') {
-      steps {
-        sh '''
-                    echo "PATH = ${PATH}"
-                    echo "M2_HOME = ${M2_HOME}"
-            ''' 
-      }
-    }
+    agent any
     
-    stage ('Check-Git-Secrets') {
-      steps {
-        sh 'rm trufflehog || true'
-        sh 'docker run gesellix/trufflehog --json https://github.com/cehkunal/webapp.git > trufflehog'
-        sh 'cat trufflehog'
-      }
+    tools {
+            maven 'maven'
+          }
+          
+    environment {
+        DOCKER_TAG = getVersion()
     }
-    
-    stage ('Source Composition Analysis') {
-      steps {
-         sh 'rm owasp* || true'
-         sh 'wget "https://raw.githubusercontent.com/cehkunal/webapp/master/owasp-dependency-check.sh" '
-         sh 'chmod +x owasp-dependency-check.sh'
-         sh 'bash owasp-dependency-check.sh'
-         sh 'cat /var/lib/jenkins/OWASP-Dependency-Check/reports/dependency-check-report.xml'
+          
+  
+    stages {
         
-      }
-    }
-    
-    stage ('SAST') {
-      steps {
-        withSonarQubeEnv('sonar') {
-          sh 'mvn sonar:sonar'
-          sh 'cat target/sonar/report-task.txt'
-        }
-      }
-    }
-    
-    stage ('Build') {
-      steps {
-      sh 'mvn clean package'
-       }
-    }
-    
-    stage ('Deploy-To-Tomcat') {
+        stage('SCM') {
             steps {
-           sshagent(['tomcat']) {
-                sh 'scp -o StrictHostKeyChecking=no target/*.war ubuntu@13.232.202.25:/prod/apache-tomcat-8.5.39/webapps/webapp.war'
-              }      
-           }       
-    }
-    
-    
-    stage ('DAST') {
-      steps {
-        sshagent(['zap']) {
-         sh 'ssh -o  StrictHostKeyChecking=no ubuntu@13.232.158.44 "docker run -t owasp/zap2docker-stable zap-baseline.py -t http://13.232.202.25:8080/webapp/" || true'
+              git 'https://github.com/Ameerbatcha/devsecops.git'  
+            }
         }
-      }
+        
+        stage('Build with Maven') {
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+      
+        stage('Create an Image') {
+            steps {
+              sh 'docker build . -t ameerbatcha/devsecops:${DOCKER_TAG}'
+            }
+        }
+        
+         
+         stage('Push image into repo') {
+            steps {
+                withCredentials([string(credentialsId: 'dockerhub', variable: 'dockerhubpasswd')]) {
+                      sh 'docker login -u ameerbatcha -p ${dockerhubpasswd}'
+                   }
+             
+              sh 'docker push ameerbatcha/regapp:${DOCKER_TAG}'
+            }
+         }
+         
+         
+          stage('Deploy on Container') {
+            steps {
+           ansiblePlaybook credentialsId: 'dev-dockerhost', disableHostKeyChecking: true, extras: '-e DOCKER_TAG=${DOCKER_TAG}', installation: 'ansible', inventory: 'dev.inv', playbook: 'deploy-docker.yml'
+            }
+        }
+        
     }
-    
-  }
+}
+
+
+def getVersion(){
+    def commitHash = sh label: '' , returnStdout: true, script: 'git rev-parse --short HEAD'
+    return commitHash
 }
