@@ -28,6 +28,16 @@ pipeline {
               }
        }
 
+   stage ('SCA') {
+         steps{
+               sh 'rm owasp* || true'
+               sh 'wget "https://raw.githubusercontent.com/Ameerbatcha/devsecops/master/owasp-dependency-check.sh"  '  
+               sh 'chmod +x owasp_dependency_check.sh '
+               sh 'bash owasp_dependency_check.sh'
+               sh 'cat /var/lib/jenkins/workspace/devsecops/reports/dependency-check-report.xml'
+              }
+       }
+
 
         stage('Build with Maven') {
             steps {
