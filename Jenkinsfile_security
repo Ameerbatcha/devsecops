@@ -15,6 +15,7 @@ pipeline {
         
         stage('SCM') {
             steps {
+              deleteDir()
               git 'https://github.com/Ameerbatcha/devsecops.git'  
             }
         }
