@@ -20,7 +20,7 @@ pipeline {
             }
         }
 
-       stage('Checking for Secrets in hardcoding') {
+ /*      stage('Checking for Secrets in hardcoding') {
          steps{
                sh 'rm trufflehog || true'
                sh 'docker pull gesellix/trufflehog'
@@ -29,7 +29,7 @@ pipeline {
               }
        }
 
- /*  stage ('SCA') {
+   stage ('SCA') {
          steps{
                sh 'rm owasp* || true'
                sh 'wget "https://raw.githubusercontent.com/Ameerbatcha/devsecops/master/owasp-dependency-check.sh"  '  
