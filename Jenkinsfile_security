@@ -65,7 +65,7 @@ pipeline {
          
          stage('Push image into repo') {
             steps {
-                withCredentials([string(credentialsId: 'dockerhub', variable: 'dockerhubpasswd')]) {
+                withCredentials([string(credentialsId: 'Dockerhub-id', variable: 'dockerhubpasswd')]) {
                       sh 'docker login -u ameerbatcha -p ${dockerhubpasswd}'
                    }
              
@@ -76,14 +76,14 @@ pipeline {
          
           stage('Deploy on Container') {
             steps {
-           ansiblePlaybook credentialsId: 'dev-dockerhost', disableHostKeyChecking: true, extras: '-e DOCKER_TAG=${DOCKER_TAG}', installation: 'ansible', inventory: 'dev.inv', playbook: 'deploy-docker.yml'
+           ansiblePlaybook credentialsId: 'ansible-server-cred', disableHostKeyChecking: true, extras: '-e DOCKER_TAG=${DOCKER_TAG}', installation: 'ansible', inventory: 'dev.inv', playbook: 'deploy-docker.yml'
             }
         }
 
     stage ('DAST') {
          steps{
            sshagent(['OWASP-zap']){
-               sh 'ssh -o StrictHostKeyChecking=no ec2-user@15.206.169.230 "docker run -t owasp/zap2docker-stable zap-baseline.py -t http://13.233.131.221:8080/dockeransible/" || true '
+               sh 'ssh -o StrictHostKeyChecking=no ec2-user@13.201.5.94 "docker run -t owasp/zap2docker-stable zap-baseline.py -t http://13.127.82.216:8080/dockeransible/" || true '
                                           }
               }
        }
