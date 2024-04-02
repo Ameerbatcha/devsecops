@@ -39,7 +39,7 @@ pipeline {
               }
        }  
 
-/*  stage ('SAST') {
+ stage ('SAST') {
          steps{
              
            withSonarQubeEnv('sonar'){
@@ -48,7 +48,7 @@ pipeline {
                                       }
 
               }
-      }  */
+      }  
 
         stage('Build with Maven') {
             steps {
@@ -83,7 +83,7 @@ pipeline {
     stage ('DAST') {
          steps{
            sshagent(['sonar-cube-server']){
-               sh 'ssh -o StrictHostKeyChecking=no ec2-user@13.201.5.94 "docker run -t owasp/zap2docker-stable zap-baseline.py -t http://13.127.82.216:8080/dockeransible/" || true '
+               sh 'ssh -o StrictHostKeyChecking=no ec2-user@172.31.87.140 "docker run -t owasp/zap2docker-stable zap-baseline.py -t http://44.201.146.14:8080/dockeransible/" || true '
                                           }
               }
        }
